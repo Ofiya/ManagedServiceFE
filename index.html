@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Upload to Fabric Lakehouse</title>
+    <title>Inforcer Assessment Reports Upload | Reliance Infosystems</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,23 +14,24 @@
     <!-- Custom Styles -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
+    <header class="bg-white shadow-md border-b-4 border-red-600">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <h1 class="text-2xl font-bold text-gray-900">PDF Upload to Fabric Lakehouse</h1>
+                <div class="flex items-center space-x-4">
+                    <img src="images/reliance-logo.png" alt="Reliance Infosystems" class="h-12 w-auto" onerror="this.style.display='none'">
+                    <div class="border-l border-gray-300 pl-4">
+                        <h1 class="text-xl font-bold text-gray-900">Inforcer Assessment Reports</h1>
+                        <p class="text-sm text-gray-600">Upload Portal</p>
+                    </div>
                 </div>
                 <div id="authSection" class="flex items-center space-x-4">
                     <span id="userInfo" class="text-sm text-gray-600 hidden"></span>
-                    <button id="signInBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+                    <button id="signInBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition duration-150 ease-in-out shadow-md">
                         Sign In
                     </button>
-                    <button id="signOutBtn" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+                    <button id="signOutBtn" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-150 ease-in-out shadow-md">
                         Sign Out
                     </button>
                 </div>
@@ -40,16 +41,27 @@
 
     <!-- Main Content -->
     <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Welcome Banner -->
+        <div class="welcome-banner bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl shadow-xl p-8 mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <svg class="w-12 h-12 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h2 class="text-3xl font-bold">Welcome to the Inforcer Assessment Reports Upload Page</h2>
+            </div>
+            <p class="text-center text-red-100 text-lg">Upload your assessment reports securely to Microsoft Fabric Lakehouse</p>
+        </div>
+
         <!-- Upload Section -->
-        <div id="uploadSection" class="bg-white rounded-xl shadow-lg p-8 hidden">
-            <h2 class="text-xl font-semibold text-gray-900 mb-6">Upload PDF Files</h2>
+        <div id="uploadSection" class="bg-white rounded-xl shadow-xl p-8 border border-gray-200 hidden">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6 border-b border-gray-200 pb-4">Upload Assessment Reports</h2>
             
             <!-- Lakehouse Selection -->
             <div class="mb-6">
                 <label for="lakehouseSelect" class="block text-sm font-medium text-gray-700 mb-2">
                     Select Lakehouse
                 </label>
-                <select id="lakehouseSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select id="lakehouseSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                     <option value="">Loading lakehouses...</option>
                 </select>
             </div>
@@ -59,7 +71,7 @@
                 <label for="reportType" class="block text-sm font-medium text-gray-700 mb-2">
                     Report Type <span class="text-red-500">*</span>
                 </label>
-                <select id="reportType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select id="reportType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                     <option value="">Select report type...</option>
                     <option value="copilot_readiness">Copilot Readiness Assessment</option>
                     <option value="security_assessment">Security Assessment (CIS / M365)</option>
@@ -82,7 +94,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Select PDF Files
                 </label>
-                <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition duration-150 ease-in-out cursor-pointer">
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-red-500 transition duration-150 ease-in-out cursor-pointer bg-gray-50">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
@@ -101,8 +113,13 @@
             </div>
 
             <!-- Upload Button -->
-            <button id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium text-lg transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                Upload Files
+            <button id="uploadBtn" class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium text-lg transition duration-150 ease-in-out shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <span class="flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Upload Assessment Reports
+                </span>
             </button>
 
             <!-- Progress Section -->
@@ -113,14 +130,19 @@
         </div>
 
         <!-- Login Prompt -->
-        <div id="loginPrompt" class="bg-white rounded-xl shadow-lg p-12 text-center">
-            <svg class="mx-auto h-16 w-16 text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div id="loginPrompt" class="bg-white rounded-xl shadow-xl p-12 text-center border border-gray-200">
+            <svg class="mx-auto h-16 w-16 text-red-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
             </svg>
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">Please Sign In</h2>
-            <p class="text-gray-600 mb-6">Sign in with your Microsoft account to upload PDF files to Fabric Lakehouse</p>
-            <button onclick="document.getElementById('signInBtn').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition duration-150 ease-in-out">
-                Sign In with Microsoft
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h2>
+            <p class="text-gray-600 mb-6">Sign in with your Microsoft account to upload assessment reports to Fabric Lakehouse</p>
+            <button onclick="document.getElementById('signInBtn').click()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition duration-150 ease-in-out shadow-lg">
+                <span class="flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"></path>
+                    </svg>
+                    Sign In with Microsoft
+                </span>
             </button>
         </div>
 
