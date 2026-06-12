@@ -28,7 +28,7 @@ CONFIG = {
     
     # Microsoft Fabric details
     'workspace_id': '0f895a7e-09c6-4645-8b47-d272bc687b8a',
-    'lakehouse_id': 'YOUR_LAKEHOUSE_ID_HERE',  # Update with your Lakehouse ID
+    'lakehouse_id': '3d0144b0-12bf-4483-9508-67b26b1fd125',  # ManagedServiceData Lakehouse
     
     # OneDrive folder path (extracted from the shared link)
     'onedrive_folder_path': '/personal/kingsley_relianceinfosystems_com/Documents/Reliance Inforcer Assessment Report',
@@ -37,12 +37,13 @@ CONFIG = {
     'temp_dir': './temp_downloads',
     
     # Fabric folder mapping based on report type
+    # These folders match the parse_assessment_pdfs.py notebook expectations
     'folder_mapping': {
-        'copilot': 'Files/copilot_readiness_reports',
-        'security': 'Files/security_assessment_reports',
-        'cis': 'Files/security_assessment_reports/cis',
-        'm365': 'Files/security_assessment_reports/m365',
-        'default': 'Files/assessment_reports'
+        'copilot': 'Files/copilot_readiness',           # Parsed to copilot_readiness_* tables
+        'security': 'Files/security_assessment',         # Parsed to security_assessment_* tables
+        'cis': 'Files/security_assessment',              # CIS reports go to security tables
+        'm365': 'Files/security_assessment',             # M365 reports go to security tables
+        'default': 'Files/security_assessment'           # Default to security if unclear
     }
 }
 
@@ -192,32 +193,33 @@ class OneDriveToFabricSync:
             print(f"   ❌ Download failed: {response.status_code}")
             return None
     
-    def categorize_file(self, file_name: str, file_path: str = '') -> str:
+    def categorize_file(self, file_name: str, file_path: str = '') -> tuple:
         """
         Determine the appropriate Fabric folder based on file name and path
-        Returns folder path in Fabric
+        Returns tuple of (folder_path, report_type)
+        
+        Report types:
+        - 'copilot': Copilot Readiness Assessment
+        - 'security': Security Assessment (CIS, M365, etc.)
         """
         file_name_lower = file_name.lower()
         path_lower = file_path.lower()
         
-        # Check for copilot readiness reports
-        if 'copilot' in file_name_lower or 'copilot' in path_lower:
-            return CONFIG['folder_mapping']['copilot']
+        # Check for copilot readiness reports (most specific first)
+        copilot_keywords = ['copilot', 'co-pilot', 'readiness']
+        if any(keyword in file_name_lower for keyword in copilot_keywords) or \
+           any(keyword in path_lower for keyword in copilot_keywords):
+            return (CONFIG['folder_mapping']['copilot'], 'copilot')
         
-        # Check for CIS security reports
-        if 'cis' in file_name_lower or 'cis' in path_lower:
-            return CONFIG['folder_mapping']['cis']
+        # Check for security-related keywords
+        security_keywords = ['security', 'cis', 'm365', 'microsoft 365', 'compliance', 'assessment']
+        if any(keyword in file_name_lower for keyword in security_keywords) or \
+           any(keyword in path_lower for keyword in security_keywords):
+            return (CONFIG['folder_mapping']['security'], 'security')
         
-        # Check for M365 security reports
-        if 'm365' in file_name_lower or 'm365' in path_lower or 'microsoft 365' in file_name_lower:
-            return CONFIG['folder_mapping']['m365']
-        
-        # Check for general security reports
-        if 'security' in file_name_lower or 'security' in path_lower:
-            return CONFIG['folder_mapping']['security']
-        
-        # Default folder
-        return CONFIG['folder_mapping']['default']
+        # Default to security assessment
+        print(f"   ⚠️  Unable to categorize '{file_name}' - defaulting to security assessment")
+        return (CONFIG['folder_mapping']['default'], 'security')
     
     def upload_to_fabric(self, local_file_path: str, fabric_folder: str, file_name: str) -> bool:
         """
@@ -281,12 +283,16 @@ class OneDriveToFabricSync:
             'downloaded': 0,
             'uploaded': 0,
             'failed': 0,
-            'skipped': 0
+            'skipped': 0,
+            'copilot_reports': 0,
+            'security_reports': 0
         }
         
         print("\n" + "="*60)
         print("🔄 Starting OneDrive to Fabric Sync")
         print("="*60)
+        print(f"📍 Target Lakehouse: {CONFIG['lakehouse_id']}")
+        print(f"📁 OneDrive Path: {CONFIG['onedrive_folder_path']}")
         
         # Authenticate
         if not self.authenticate():
@@ -327,21 +333,30 @@ class OneDriveToFabricSync:
             
             stats['downloaded'] += 1
             
-            # Determine target folder
-            fabric_folder = self.categorize_file(
+            # Determine target folder and report type
+            fabric_folder, report_type = self.categorize_file(
                 file_info['name'],
                 file_info.get('path', '')
             )
             
             print(f"   📂 Target folder: {fabric_folder}")
+            print(f"   🏷️  Report type: {report_type.upper()}")
             
             if dry_run:
                 print(f"   🔍 DRY RUN - Would upload to: {fabric_folder}")
                 stats['uploaded'] += 1
+                if report_type == 'copilot':
+                    stats['copilot_reports'] += 1
+                else:
+                    stats['security_reports'] += 1
             else:
                 # Upload to Fabric
                 if self.upload_to_fabric(local_path, fabric_folder, file_info['name']):
                     stats['uploaded'] += 1
+                    if report_type == 'copilot':
+                        stats['copilot_reports'] += 1
+                    else:
+                        stats['security_reports'] += 1
                 else:
                     stats['failed'] += 1
             
@@ -364,9 +379,28 @@ class OneDriveToFabricSync:
         print(f"Total files found:  {stats['total_files']}")
         print(f"Downloaded:         {stats['downloaded']}")
         print(f"Uploaded:           {stats['uploaded']}")
+        print(f"  • Copilot:        {stats['copilot_reports']}")
+        print(f"  • Security:       {stats['security_reports']}")
         print(f"Failed:             {stats['failed']}")
         print(f"Skipped:            {stats['skipped']}")
         print("="*60)
+        
+        # Show next steps if files were uploaded
+        if stats['uploaded'] > 0 and not dry_run:
+            print("\n✅ Files uploaded successfully!")
+            print("\n📊 Next Steps:")
+            print("1. Open Microsoft Fabric workspace")
+            print("2. Navigate to your Lakehouse: ManagedServiceData")
+            print("3. Run the 'parse_assessment_pdfs' notebook to process the files")
+            print("4. Check the following tables:")
+            if stats['copilot_reports'] > 0:
+                print("   • copilot_readiness_assessments")
+                print("   • copilot_readiness_categories")
+                print("   • copilot_readiness_checks")
+            if stats['security_reports'] > 0:
+                print("   • security_assessment_assessments")
+                print("   • security_assessment_categories")
+                print("   • security_assessment_checks")
         
         return stats
 
@@ -393,12 +427,7 @@ def main():
     # Update config if lakehouse ID provided
     if args.lakehouse_id:
         CONFIG['lakehouse_id'] = args.lakehouse_id
-    
-    # Validate configuration
-    if CONFIG['lakehouse_id'] == 'YOUR_LAKEHOUSE_ID_HERE':
-        print("❌ Error: Please update CONFIG['lakehouse_id'] in the script")
-        print("   You can find your Lakehouse ID in the Fabric portal URL")
-        return
+        print(f"Using Lakehouse ID from command line: {args.lakehouse_id}")
     
     # Create syncer and run
     syncer = OneDriveToFabricSync()

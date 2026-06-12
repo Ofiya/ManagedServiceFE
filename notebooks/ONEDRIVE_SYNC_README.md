@@ -43,36 +43,25 @@ In your Azure AD App Registration (portal.azure.com), add these API permissions:
 
 Grant admin consent for all permissions.
 
-### 3. Update Configuration
+### 3. Lakehouse Configuration
 
-Edit `onedrive_to_fabric_sync.py` and update the CONFIG section:
+**✅ Already Configured!**
 
-```python
-CONFIG = {
-    'client_id': 'YOUR_CLIENT_ID',
-    'tenant_id': 'YOUR_TENANT_ID',
-    'workspace_id': 'YOUR_WORKSPACE_ID',
-    'lakehouse_id': 'YOUR_LAKEHOUSE_ID',  # ⚠️ IMPORTANT: Update this!
-    # ... other settings
-}
-```
+The script is pre-configured with your Lakehouse:
+- **Lakehouse ID:** `3d0144b0-12bf-4483-9508-67b26b1fd125`
+- **Lakehouse Name:** ManagedServiceData
 
-**How to get your Lakehouse ID:**
-1. Open Microsoft Fabric portal
-2. Navigate to your workspace and lakehouse
-3. Copy the lakehouse ID from the URL:
-   ```
-   https://app.fabric.microsoft.com/groups/{WORKSPACE_ID}/lakehouses/{LAKEHOUSE_ID}
-   ```
+**How it was obtained:**
+From the Fabric portal URL: `https://app.fabric.microsoft.com/groups/{WORKSPACE_ID}/lakehouses/{LAKEHOUSE_ID}`
 
-### 4. Configure OneDrive Access
+### 4. OneDrive Path Configuration
 
-The script is pre-configured with your OneDrive path:
+**✅ Already Configured!**
+
+The script is pre-configured for your OneDrive location:
 ```
 /personal/kingsley_relianceinfosystems_com/Documents/Reliance Inforcer Assessment Report
 ```
-
-If your folder structure is different, update `onedrive_folder_path` in the CONFIG.
 
 ## Usage
 
@@ -97,25 +86,72 @@ Once you're satisfied with the dry run, perform the actual sync:
 python onedrive_to_fabric_sync.py
 ```
 
-### Provide Lakehouse ID via Command Line
+The script will:
+1. Authenticate with your Microsoft account
+2. Scan your OneDrive folder for PDF files
+3. Download files to a temporary directory
+4. Categorize each file (Copilot vs Security)
+5. Upload to the appropriate Fabric Lakehouse folder
+6. Display a summary with next steps
 
-```bash
-python onedrive_to_fabric_sync.py --lakehouse-id YOUR_LAKEHOUSE_ID
+### Processing the Uploaded Files
+
+After files are synced to Fabric, you need to run the parsing notebook to extract data into tables:
+
+**Option 1: Via Fabric Portal (Recommended)**
+1. Open [Microsoft Fabric](https://app.fabric.microsoft.com)
+2. Navigate to your workspace
+3. Open the `ManagedServiceData` lakehouse
+4. Open the `parse_assessment_pdfs` notebook
+5. Click "Run All" to process all PDFs
+
+**Option 2: Via Fabric API (Advanced)**
+```python
+# Future enhancement: Auto-trigger notebook execution
+# This can be added to the sync script if needed
 ```
+
+### Viewing the Results
+
+After the parse notebook completes:
+
+1. Navigate to your Lakehouse in Fabric portal
+2. Click on "Tables" in the left sidebar
+3. You'll see the following tables:
 
 ## File Organization
 
-The script automatically categorizes files based on their names and uploads them to appropriate folders:
+The script automatically categorizes files based on their names and uploads them to folders that feed into the `parse_assessment_pdfs.py` notebook:
 
-| File Contains | Fabric Destination |
-|---------------|-------------------|
-| "copilot" | `Files/copilot_readiness_reports/` |
-| "cis" | `Files/security_assessment_reports/cis/` |
-| "m365" or "microsoft 365" | `Files/security_assessment_reports/m365/` |
-| "security" | `Files/security_assessment_reports/` |
-| Other PDFs | `Files/assessment_reports/` |
+| File Contains | Fabric Destination | Parsed Into Tables |
+|---------------|-------------------|-------------------|
+| "copilot" or "readiness" | `Files/copilot_readiness/` | `copilot_readiness_assessments`<br>`copilot_readiness_categories`<br>`copilot_readiness_checks` |
+| "security", "cis", or "m365" | `Files/security_assessment/` | `security_assessment_assessments`<br>`security_assessment_categories`<br>`security_assessment_checks` |
+| Other PDFs | `Files/security_assessment/` (default) | Same as security |
 
-You can customize this mapping by editing the `folder_mapping` in CONFIG.
+### Integration with Parse Notebook
+
+After files are uploaded, the `parse_assessment_pdfs.py` notebook processes them:
+
+1. **Extracts Data:**
+   - Assessment metadata (name, tenant, date, time)
+   - Executive summary (scores, passed/failed counts)
+   - Categories and their scores
+   - Individual check results with status and priority
+
+2. **Creates Delta Tables:**
+   - Upserts data (merge or delete+insert for idempotency)
+   - Maintains referential integrity across tables
+   - Handles re-runs gracefully (no duplicates)
+
+3. **Table Structure:**
+   ```
+   {report_type}_assessments      # Main assessment record
+   {report_type}_categories       # Category-level scores
+   {report_type}_checks          # Individual check details
+   ```
+
+You can customize the folder mapping by editing the `folder_mapping` in the CONFIG section of `onedrive_to_fabric_sync.py`.
 
 ## Authentication
 
