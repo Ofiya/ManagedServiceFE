@@ -1,0 +1,23 @@
+{
+  "name": "fabric-pdf-upload",
+  "version": "1.0.0",
+  "description": "Upload PDF files to Microsoft Fabric Lakehouse",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "serve": "http-server -p 8080 -c-1"
+  },
+  "keywords": [
+    "fabric",
+    "lakehouse",
+    "pdf",
+    "upload",
+    "microsoft",
+    "azure"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

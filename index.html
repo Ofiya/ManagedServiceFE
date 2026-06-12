@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Upload to Fabric Lakehouse</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MSAL.js for Azure AD Authentication -->
+    <script src="https://alcdn.msauth.net/browser/2.38.1/js/msal-browser.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <h1 class="text-2xl font-bold text-gray-900">PDF Upload to Fabric Lakehouse</h1>
+                </div>
+                <div id="authSection" class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-sm text-gray-600 hidden"></span>
+                    <button id="signInBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+                        Sign In
+                    </button>
+                    <button id="signOutBtn" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Upload Section -->
+        <div id="uploadSection" class="bg-white rounded-xl shadow-lg p-8 hidden">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">Upload PDF Files</h2>
+            
+            <!-- Lakehouse Selection -->
+            <div class="mb-6">
+                <label for="lakehouseSelect" class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Lakehouse
+                </label>
+                <select id="lakehouseSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Loading lakehouses...</option>
+                </select>
+            </div>
+
+            <!-- Report Type -->
+            <div class="mb-6">
+                <label for="reportType" class="block text-sm font-medium text-gray-700 mb-2">
+                    Report Type <span class="text-red-500">*</span>
+                </label>
+                <select id="reportType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Select report type...</option>
+                    <option value="copilot_readiness">Copilot Readiness Assessment</option>
+                    <option value="security_assessment">Security Assessment (CIS / M365)</option>
+                </select>
+                <p class="mt-1 text-sm text-gray-500">Determines which Lakehouse table the parsed data goes into</p>
+            </div>
+
+            <!-- Folder Path -->
+            <div class="mb-6">
+                <label for="folderPath" class="block text-sm font-medium text-gray-700 mb-2">
+                    Destination Folder
+                </label>
+                <input type="text" id="folderPath" readonly
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
+                <p class="mt-1 text-sm text-gray-500">Auto-set based on report type</p>
+            </div>
+
+            <!-- File Upload Area -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Select PDF Files
+                </label>
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition duration-150 ease-in-out cursor-pointer">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="mt-4 text-lg text-gray-600">
+                        <span class="font-semibold">Click to browse</span> or drag and drop PDF files here
+                    </p>
+                    <p class="mt-2 text-sm text-gray-500">PDF files only</p>
+                    <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple class="hidden">
+                </div>
+            </div>
+
+            <!-- Selected Files List -->
+            <div id="filesList" class="mb-6 hidden">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Selected Files:</h3>
+                <ul id="filesListItems" class="space-y-2"></ul>
+            </div>
+
+            <!-- Upload Button -->
+            <button id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium text-lg transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Upload Files
+            </button>
+
+            <!-- Progress Section -->
+            <div id="progressSection" class="mt-6 hidden">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Upload Progress:</h3>
+                <div id="progressItems" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Login Prompt -->
+        <div id="loginPrompt" class="bg-white rounded-xl shadow-lg p-12 text-center">
+            <svg class="mx-auto h-16 w-16 text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Please Sign In</h2>
+            <p class="text-gray-600 mb-6">Sign in with your Microsoft account to upload PDF files to Fabric Lakehouse</p>
+            <button onclick="document.getElementById('signInBtn').click()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition duration-150 ease-in-out">
+                Sign In with Microsoft
+            </button>
+        </div>
+
+        <!-- Notifications -->
+        <div id="notifications" class="fixed bottom-6 right-6 space-y-2 z-50"></div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/fabric-api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

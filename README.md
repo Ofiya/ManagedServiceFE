@@ -1,0 +1,244 @@
+# PDF Upload to Fabric Lakehouse
+
+A simple, modern web application for uploading PDF files to Microsoft Fabric Lakehouse using Azure AD authentication.
+
+## Features
+
+- 🔐 **Secure Authentication** - Microsoft Entra ID (Azure AD) authentication using MSAL.js
+- 📁 **Drag & Drop Upload** - Easy file upload with drag-and-drop support
+- 🎯 **Multiple Files** - Upload multiple PDF files at once
+- 📊 **Progress Tracking** - Real-time upload progress for each file
+- 🏢 **Workspace Integration** - Direct integration with Microsoft Fabric Lakehouse
+- 🎨 **Modern UI** - Clean, responsive interface built with Tailwind CSS
+
+## Prerequisites
+
+Before using this application, you need:
+
+1. **Microsoft Fabric Access**
+   - Active Microsoft Fabric subscription
+   - Workspace with at least one Lakehouse created
+   - Contributor or higher permissions on the workspace
+
+2. **Azure AD App Registration**
+   - Azure subscription
+   - Permissions to create app registrations in Azure AD
+
+## Setup Instructions
+
+### 1. Create Azure AD App Registration
+
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Navigate to **App registrations** > **New registration**
+3. Fill in the details:
+   - **Name**: `Fabric PDF Upload App` (or your preferred name)
+   - **Supported account types**: Select appropriate option (typically "Accounts in this organizational directory only")
+   - **Redirect URI**: Select "Single-page application (SPA)" and enter your URL (e.g., `http://localhost:8080` for local testing)
+4. Click **Register**
+
+### 2. Configure API Permissions
+
+1. In your app registration, go to **API permissions**
+2. Click **Add a permission**
+3. Add the following permissions:
+   - **Microsoft Graph**
+     - `User.Read` (Delegated)
+   - **Microsoft Fabric API** (may be listed as "Power BI Service")
+     - `Item.ReadWrite.All` (Delegated)
+     - `Workspace.Read.All` (Delegated)
+4. Click **Grant admin consent** for your organization
+
+### 3. Configure Authentication
+
+1. In your app registration, go to **Authentication**
+2. Under **Single-page application**, add your redirect URIs:
+   - For local development: `http://localhost:8080`
+   - For production: Your production URL
+3. Under **Implicit grant and hybrid flows**, ensure nothing is checked (SPA uses PKCE)
+4. Save changes
+
+### 4. Get Your Configuration Values
+
+1. **Client ID**: Copy from app registration Overview page
+2. **Tenant ID**: Copy from app registration Overview page
+3. **Workspace ID**:
+   - Open [Microsoft Fabric](https://app.fabric.microsoft.com)
+   - Navigate to your workspace
+   - Copy the workspace ID from the URL: `https://app.fabric.microsoft.com/groups/{WORKSPACE_ID}/...`
+
+### 5. Update Configuration File
+
+1. Open `config.js` in your application
+2. Replace the placeholder values:
+
+```javascript
+const CONFIG = {
+    clientId: 'YOUR_CLIENT_ID_HERE',           // From step 4
+    tenantId: 'YOUR_TENANT_ID_HERE',           // From step 4
+    fabricWorkspaceId: 'YOUR_WORKSPACE_ID_HERE', // From step 4
+    scopes: [
+        'https://api.fabric.microsoft.com/.default'
+    ]
+};
+```
+
+## Running the Application
+
+### Option 1: Using Python (Recommended for local testing)
+
+```bash
+# Navigate to the application directory
+cd c:\MSPFrontEnd
+
+# Start a simple HTTP server on port 8080
+python -m http.server 8080
+```
+
+Then open your browser to `http://localhost:8080`
+
+### Option 2: Using Node.js http-server
+
+```bash
+# Install http-server globally (one time)
+npm install -g http-server
+
+# Navigate to the application directory
+cd c:\MSPFrontEnd
+
+# Start the server
+http-server -p 8080
+```
+
+Then open your browser to `http://localhost:8080`
+
+### Option 3: Using VS Code Live Server
+
+1. Install the "Live Server" extension in VS Code
+2. Right-click on `index.html`
+3. Select "Open with Live Server"
+
+## Usage
+
+1. **Sign In**
+   - Click the "Sign In" button
+   - Authenticate with your Microsoft account
+   - Grant permissions when prompted
+
+2. **Select Lakehouse**
+   - Choose the destination lakehouse from the dropdown
+   - Available lakehouses will load automatically after sign-in
+
+3. **Choose Destination Folder** (Optional)
+   - Enter a folder path like `documents/pdfs` or `uploads/2024`
+   - Leave empty to upload to the root Files directory
+
+4. **Upload Files**
+   - Click the upload area or drag PDF files onto it
+   - Select one or more PDF files
+   - Review the selected files list
+   - Click "Upload Files"
+   - Monitor progress for each file
+
+5. **View Results**
+   - Success/error notifications will appear
+   - Files will be available in your Lakehouse under Files section
+
+## File Structure
+
+```
+MSPFrontEnd/
+├── index.html              # Main HTML page
+├── config.js               # Configuration file (update with your values)
+├── css/
+│   └── styles.css         # Custom CSS styles
+├── js/
+│   ├── app.js             # Main application logic
+│   ├── auth.js            # Authentication handling (MSAL)
+│   └── fabric-api.js      # Fabric Lakehouse API integration
+└── README.md              # This file
+```
+
+## API Endpoints Used
+
+This application uses the following Microsoft Fabric APIs:
+
+1. **List Lakehouses**: `GET https://api.fabric.microsoft.com/v1/workspaces/{workspaceId}/lakehouses`
+2. **Upload File**: `PUT https://onelake.dfs.fabric.microsoft.com/{workspaceId}/{lakehouseId}/Files/{path}`
+
+## Troubleshooting
+
+### Authentication Issues
+
+- **Error: AADSTS50011**: Redirect URI mismatch
+  - Ensure the redirect URI in Azure AD matches your application URL exactly
+  - Check for http vs https, trailing slashes, and port numbers
+
+- **Error: AADSTS65001**: Consent required
+  - Grant admin consent for API permissions in Azure AD
+  - Or have users consent individually on first sign-in
+
+### Upload Issues
+
+- **Error: 401 Unauthorized**
+  - Check API permissions are granted in Azure AD
+  - Ensure you have access to the workspace and lakehouse
+  - Try signing out and signing back in
+
+- **Error: 404 Not Found**
+  - Verify the workspace ID is correct
+  - Verify the lakehouse ID is correct
+  - Check that the lakehouse exists in the workspace
+
+- **Error: Network Error**
+  - Check CORS settings if hosting on a custom domain
+  - Verify firewall/network access to Fabric APIs
+
+### File Upload Fails
+
+- Ensure file is a valid PDF
+- Check file size limits (OneLake has file size limits)
+- Verify you have write permissions on the lakehouse
+- Check network connectivity
+
+## Security Considerations
+
+1. **Never commit `config.js` with real credentials** to source control
+2. Use environment-specific configuration files
+3. For production, consider using:
+   - Azure Key Vault for storing secrets
+   - Managed identities where applicable
+   - HTTPS for all connections
+4. Regularly rotate client secrets (if using confidential client flow)
+5. Review and minimize API permissions
+
+## Browser Compatibility
+
+- Modern browsers with ES6 support
+- Chrome 60+
+- Firefox 60+
+- Edge 79+
+- Safari 12+
+
+## License
+
+This project is provided as-is for demonstration and development purposes.
+
+## Support
+
+For issues related to:
+- **Microsoft Fabric**: [Fabric documentation](https://learn.microsoft.com/fabric/)
+- **Azure AD/MSAL**: [MSAL.js documentation](https://learn.microsoft.com/azure/active-directory/develop/msal-overview)
+- **This application**: Create an issue in your repository
+
+## Next Steps
+
+Consider enhancing this application with:
+
+- File type validation on the backend
+- Virus scanning integration
+- Metadata extraction from PDFs
+- Bulk upload optimizations
+- Upload queue management
+- File preview before upload
+- Integration with Fabric Data Pipeline for processing
+- Automatic text extraction and indexing
