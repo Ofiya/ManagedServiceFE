@@ -1,0 +1,16 @@
+# Python dependencies for OneDrive to Fabric Lakehouse Sync
+
+# Microsoft Authentication Library
+msal==1.28.0
+
+# HTTP requests
+requests==2.31.0
+
+# Optional: For better progress bars
+tqdm==4.66.2
+
+# Optional: For scheduling (if running as a service)
+schedule==1.2.1
+
+# Optional: For logging
+python-dotenv==1.0.1

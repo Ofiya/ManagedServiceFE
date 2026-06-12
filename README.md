@@ -1,15 +1,23 @@
-# PDF Upload to Fabric Lakehouse
+# Inforcer Assessment Reports Upload Platform
 
-A simple, modern web application for uploading PDF files to Microsoft Fabric Lakehouse using Azure AD authentication.
+A comprehensive solution for uploading assessment reports to Microsoft Fabric Lakehouse with both web interface and automated OneDrive sync capabilities.
 
 ## Features
 
+### Web Upload Interface
 - 🔐 **Secure Authentication** - Microsoft Entra ID (Azure AD) authentication using MSAL.js
 - 📁 **Drag & Drop Upload** - Easy file upload with drag-and-drop support
 - 🎯 **Multiple Files** - Upload multiple PDF files at once
 - 📊 **Progress Tracking** - Real-time upload progress for each file
-- 🏢 **Workspace Integration** - Direct integration with Microsoft Fabric Lakehouse
-- 🎨 **Modern UI** - Clean, responsive interface built with Tailwind CSS
+- 🎨 **Modern UI** - Clean, responsive interface with security carousel
+- 🎨 **Reliance Branding** - Professional design with company logo and colors
+
+### Automated OneDrive Sync
+- 🔄 **Bulk Import** - Automatically sync entire folders from OneDrive/SharePoint
+- 🤖 **Scheduled Sync** - Run on a schedule for continuous synchronization
+- 📂 **Smart Categorization** - Automatically organizes files by report type
+- 💾 **Batch Processing** - Handle hundreds of files efficiently
+- ⚡ **Dry-Run Mode** - Test before actual sync
 
 ## Prerequisites
 
@@ -160,19 +168,75 @@ Then open your browser to `http://localhost:8080`
    - Success/error notifications will appear
    - Files will be available in your Lakehouse under Files section
 
+## Automated OneDrive Sync
+
+For bulk imports or automated synchronization from OneDrive/SharePoint, use the Python sync script:
+
+### Quick Start
+
+```bash
+cd notebooks
+python run_sync.bat
+```
+
+Or run directly:
+
+```bash
+cd notebooks
+pip install -r requirements_sync.txt
+python onedrive_to_fabric_sync.py --dry-run  # Test first
+python onedrive_to_fabric_sync.py            # Actual sync
+```
+
+### Features
+
+- ✅ Automatically discovers and downloads files from your OneDrive folder
+- ✅ Categorizes files by name (Copilot, Security, CIS, M365)
+- ✅ Bulk uploads to appropriate Fabric folders
+- ✅ Can be scheduled for automatic daily/weekly syncs
+
+### Pre-configured OneDrive Path
+
+The script is already configured for your OneDrive location:
+```
+/personal/kingsley_relianceinfosystems_com/Documents/Reliance Inforcer Assessment Report
+```
+
+**📖 Full Documentation:** See [`notebooks/ONEDRIVE_SYNC_README.md`](notebooks/ONEDRIVE_SYNC_README.md) for complete setup instructions.
+
+### When to Use Each Method
+
+| Scenario | Use Web Upload | Use OneDrive Sync |
+|----------|---------------|-------------------|
+| Quick single file | ✅ | |
+| 5-10 files | ✅ | |
+| 50+ files | | ✅ |
+| Initial bulk import | | ✅ |
+| Scheduled automation | | ✅ |
+| Files already in OneDrive | | ✅ |
+| New ad-hoc upload | ✅ | |
+
 ## File Structure
 
 ```
 MSPFrontEnd/
-├── index.html              # Main HTML page
-├── config.js               # Configuration file (update with your values)
+├── index.html                 # Main HTML page
+├── config.js                  # Configuration file (update with your values)
 ├── css/
-│   └── styles.css         # Custom CSS styles
+│   └── styles.css            # Custom CSS styles
 ├── js/
-│   ├── app.js             # Main application logic
-│   ├── auth.js            # Authentication handling (MSAL)
-│   └── fabric-api.js      # Fabric Lakehouse API integration
-└── README.md              # This file
+│   ├── app.js                # Main application logic
+│   ├── auth.js               # Authentication handling (MSAL)
+│   └── fabric-api.js         # Fabric Lakehouse API integration
+├── notebooks/
+│   ├── onedrive_to_fabric_sync.py    # OneDrive sync automation script
+│   ├── parse_assessment_pdfs.py      # PDF parsing notebook
+│   ├── requirements_sync.txt         # Python dependencies
+│   ├── run_sync.bat                  # Quick start script
+│   └── ONEDRIVE_SYNC_README.md       # Detailed sync documentation
+├── images/
+│   └── reliance logo.png     # Company logo
+└── README.md                  # This file
 ```
 
 ## API Endpoints Used
