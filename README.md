@@ -84,7 +84,24 @@ const CONFIG = {
 
 ## Running the Application
 
-### Option 1: Using Python (Recommended for local testing)
+**IMPORTANT**: This application **must** be run through an HTTP server, not opened directly as a file. OAuth2 authentication requires a proper HTTP(S) origin.
+
+### Option 1: Using Node.js http-server (Recommended)
+
+```bash
+# Navigate to the application directory
+cd c:\MSPFrontEnd
+
+# Install dependencies (first time only)
+npm install
+
+# Start the HTTP server
+npm run serve
+```
+
+Then open your browser to `http://localhost:8080`
+
+### Option 2: Using Python
 
 ```bash
 # Navigate to the application directory
@@ -96,7 +113,7 @@ python -m http.server 8080
 
 Then open your browser to `http://localhost:8080`
 
-### Option 2: Using Node.js http-server
+### Option 3: Using Node.js http-server directly
 
 ```bash
 # Install http-server globally (one time)
@@ -167,10 +184,28 @@ This application uses the following Microsoft Fabric APIs:
 
 ## Troubleshooting
 
+### Login Button Not Responding
+
+- **Problem**: Clicking "Sign In" does nothing or shows errors
+  - **Cause**: Application opened directly as a file (`file://` protocol)
+  - **Solution**: Run the application through an HTTP server (see "Running the Application" section)
+  - OAuth2 authentication requires a proper HTTP origin URL
+
 ### Authentication Issues
+
+- **Error: AADSTS70011 - Static scope limit exceeded**
+  - **Cause**: Requesting too many `.default` scopes simultaneously
+  - **Solution**: Update `config.js` to use specific scopes instead:
+    ```javascript
+    scopes: [
+        'User.Read',
+        'Files.ReadWrite.All'
+    ]
+    ```
 
 - **Error: AADSTS50011**: Redirect URI mismatch
   - Ensure the redirect URI in Azure AD matches your application URL exactly
+  - For local development, add `http://localhost:8080` to the app registration
   - Check for http vs https, trailing slashes, and port numbers
 
 - **Error: AADSTS65001**: Consent required
