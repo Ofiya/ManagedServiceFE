@@ -5,9 +5,30 @@
 let selectedFiles = [];
 
 /**
+ * Initialize security carousel animation
+ */
+function initializeCarousel() {
+    const slides = document.querySelectorAll('.carousel-slide');
+    let currentSlide = 0;
+    
+    // Show first slide
+    if (slides.length > 0) {
+        slides[0].classList.add('active');
+    }
+    
+    // Cycle through slides
+    setInterval(() => {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+    }, 4000); // Change slide every 4 seconds
+}
+
+/**
  * Initialize application
  */
 document.addEventListener('DOMContentLoaded', function() {
+    initializeCarousel();
     initializeEventListeners();
 });
 
